@@ -1,0 +1,241 @@
+#ceasar cipher
+def caesar_encrypt(plaintext, key):
+    ciphertext = ""
+    for char in plaintext:
+        if char.isalpha():  # Check if the character is a letter
+            # Determine the offset based on the character's case
+            if char.islower():
+                offset = ord('a')
+            else:
+                offset = ord('A')
+            # Apply the Caesar cipher encryption
+            encrypted_char = chr((ord(char) - offset + key) % 26 + offset)
+            ciphertext += encrypted_char
+        else:
+            ciphertext += char  # Keep non-alphabetic characters unchanged
+    return ciphertext
+
+def caesar_decrypt(ciphertext, key):
+    return caesar_encrypt(ciphertext, -key)  # Decryption is just encryption with negative key
+
+# Test the functions
+plaintext = "Hello, World!"
+key = 3
+encrypted_text = caesar_encrypt(plaintext, key)
+decrypted_text = caesar_decrypt(encrypted_text, key)
+
+encrypted_text, decrypted_text
+
+
+#playfair cipher
+def generate_key_matrix(keyword):
+    # Create a 5x5 matrix initialized with None
+    matrix = [[None]*5 for _ in range(5)]
+    # Prepare the alphabet (combining I and J)
+    alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
+    # Remove duplicate letters from keyword and prepare insertion order for the matrix
+    seen = set()
+    filtered_keyword = []
+    for char in keyword.upper():
+        if char not in seen and char in alphabet:
+            seen.add(char)
+            filtered_keyword.append(char)
+    # Insert keyword into the matrix
+    alphabet_set = set(alphabet)
+    full_sequence = filtered_keyword + [char for char in alphabet if char not in seen]
+    iterator = iter(full_sequence)
+    for i in range(5):
+        for j in range(5):
+            matrix[i][j] = next(iterator)
+    return matrix
+
+def playfair_encrypt(plaintext, matrix):
+    def find_position(char):
+        for i in range(5):
+            for j in range(5):
+                if matrix[i][j] == char:
+                    return (i, j)
+        return None
+
+    def prepare_text(plaintext):
+        # Remove non-alphabetic characters and handle duplicates
+        clean_text = ""
+        prev_char = ""
+        for char in plaintext.upper():
+            if char in "ABCDEFGHIKLMNOPQRSTUVWXYZ":
+                if char == prev_char:
+                    clean_text += 'X'
+                clean_text += char
+                prev_char = char
+        # Add a padding character if the length is odd
+        if len(clean_text) % 2 != 0:
+            clean_text += 'X'
+        return clean_text
+
+    prepared_text = prepare_text(plaintext)
+    ciphertext = ""
+
+    # Encrypt in pairs
+    for i in range(0, len(prepared_text), 2):
+        row1, col1 = find_position(prepared_text[i])
+        row2, col2 = find_position(prepared_text[i+1])
+
+        if row1 == row2:
+            # Same row: shift right
+            ciphertext += matrix[row1][(col1 + 1) % 5]
+            ciphertext += matrix[row2][(col2 + 1) % 5]
+        elif col1 == col2:
+            # Same column: shift down
+            ciphertext += matrix[(row1 + 1) % 5][col1]
+            ciphertext += matrix[(row2 + 1) % 5][col2]
+        else:
+            # Rectangle swap
+            ciphertext += matrix[row1][col2]
+            ciphertext += matrix[row2][col1]
+
+    return ciphertext
+
+def playfair_decrypt(ciphertext, matrix):
+    def find_position(char):
+        for i in range(5):
+            for j in range(5):
+                if matrix[i][j] == char:
+                    return (i, j)
+        return None
+
+    plaintext = ""
+    # Decrypt in pairs
+    for i in range(0, len(ciphertext), 2):
+        row1, col1 = find_position(ciphertext[i])
+        row2, col2 = find_position(ciphertext[i+1])
+
+        if row1 == row2:
+            # Same row: shift left
+            plaintext += matrix[row1][(col1 - 1) % 5]
+            plaintext += matrix[row2][(col2 - 1) % 5]
+        elif col1 == col2:
+            # Same column: shift up
+            plaintext += matrix[(row1 - 1) % 5][col1]
+            plaintext += matrix[(row2 - 1) % 5][col2]
+        else:
+            # Rectangle swap
+            plaintext += matrix[row1][col2]
+            plaintext += matrix[row2][col1]
+
+    return plaintext
+
+# Example usage
+keyword = "MONARCHY"
+matrix = generate_key_matrix(keyword)
+plaintext = "HELLO"
+encrypted_text = playfair_encrypt(plaintext, matrix)
+decrypted_text = playfair_decrypt(encrypted_text, matrix)
+
+matrix, encrypted_text, decrypted_text
+
+#viginere cipher
+def vigenere_encrypt(plaintext, keyword):
+    # Extend the keyword to match the length of the plaintext
+    extended_keyword = (keyword * ((len(plaintext) // len(keyword)) + 1))[:len(plaintext)]
+    ciphertext = ""
+    
+    for p_char, k_char in zip(plaintext, extended_keyword):
+        if p_char.isalpha():  # Ensure the character is a letter
+            offset = ord('a') if p_char.islower() else ord('A')
+            k_offset = ord('a') if k_char.islower() else ord('A')
+            # Encrypt using Vigenère's formula: Ci = (Pi + Ki) % 26
+            encrypted_char = chr((ord(p_char) - offset + (ord(k_char) - k_offset)) % 26 + offset)
+            ciphertext += encrypted_char
+        else:
+            ciphertext += p_char  # Non-alphabetic characters are not encrypted
+
+    return ciphertext
+
+def vigenere_decrypt(ciphertext, keyword):
+    # Extend the keyword to match the length of the ciphertext
+    extended_keyword = (keyword * ((len(ciphertext) // len(keyword)) + 1))[:len(ciphertext)]
+    plaintext = ""
+    
+    for c_char, k_char in zip(ciphertext, extended_keyword):
+        if c_char.isalpha():  # Ensure the character is a letter
+            offset = ord('a') if c_char.islower() else ord('A')
+            k_offset = ord('a') if k_char.islower() else ord('A')
+            # Decrypt using Vigenère's formula: Pi = (Ci - Ki + 26) % 26
+            decrypted_char = chr((ord(c_char) - offset - (ord(k_char) - k_offset) + 26) % 26 + offset)
+            plaintext += decrypted_char
+        else:
+            plaintext += c_char  # Non-alphabetic characters are not encrypted
+
+    return plaintext
+
+# Example usage
+plaintext = "Hello, World!"
+keyword = "KEY"
+encrypted_text = vigenere_encrypt(plaintext, keyword)
+decrypted_text = vigenere_decrypt(encrypted_text, keyword)
+
+encrypted_text, decrypted_text
+
+#hill cypher
+import numpy as np
+
+def mod_inv(a, m):
+    """ Calculate the modular inverse of a under modulo m """
+    m0, x0, x1 = m, 0, 1
+    if m == 1:
+        return 0
+    while a > 1:
+        q = a // m
+        m, a = a % m, m
+        x0, x1 = x1 - q * x0, x0
+    if x1 < 0:
+        x1 += m0
+    return x1
+
+def encrypt_hill(plaintext, key_matrix):
+    # Convert plaintext to numbers
+    plaintext = plaintext.upper().replace(" ", "")
+    if len(plaintext) % 2 != 0:
+        plaintext += 'X'  # Padding
+    plaintext_nums = [ord(char) - ord('A') for char in plaintext]
+
+    # Create plaintext vectors
+    plaintext_vectors = np.array(plaintext_nums).reshape(-1, 2)
+    
+    # Encrypt using matrix multiplication modulo 26
+    ciphertext_vectors = np.dot(plaintext_vectors, key_matrix) % 26
+    ciphertext = ''.join(chr(num + ord('A')) for num in ciphertext_vectors.flatten())
+
+    return ciphertext
+
+def decrypt_hill(ciphertext, key_matrix):
+    # Calculate the determinant and modular inverse of the determinant
+    det = int(np.round(np.linalg.det(key_matrix)))
+    det_inv = mod_inv(det, 26)
+
+    # Calculate the inverse of the key matrix modulo 26
+    adjugate_matrix = np.array([[key_matrix[1, 1], -key_matrix[0, 1]],
+                                [-key_matrix[1, 0], key_matrix[0, 0]]])
+    inverse_matrix = (det_inv * adjugate_matrix) % 26
+
+    # Convert ciphertext to numbers
+    ciphertext_nums = [ord(char) - ord('A') for char in ciphertext]
+    
+    # Create ciphertext vectors
+    ciphertext_vectors = np.array(ciphertext_nums).reshape(-1, 2)
+    
+    # Decrypt using matrix multiplication modulo 26
+    plaintext_vectors = np.dot(ciphertext_vectors, inverse_matrix) % 26
+    plaintext = ''.join(chr(int(num) + ord('A')) for num in plaintext_vectors.flatten())
+
+    return plaintext
+
+# Example key matrix and text
+key_matrix = np.array([[5, 17], [8, 3]])
+plaintext = "HELLO"
+encrypted_text = encrypt_hill(plaintext, key_matrix)
+decrypted_text = decrypt_hill(encrypted_text, key_matrix)
+
+key_matrix, encrypted_text, decrypted_text
+
+
