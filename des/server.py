@@ -1,3 +1,5 @@
+# data = 123456ABCD132536
+# key = AABB09182736CCDD
 ##des server
 def hex2bin(s):
     mp = {'0': "0000",

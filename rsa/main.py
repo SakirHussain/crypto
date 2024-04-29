@@ -28,6 +28,7 @@ def multiplicative_inverse(e, phi):
 
     if temp_phi == 1:
         return d + phi
+    
 
 def generate_prime():
     # Generates a prime number by generating a random 10 bit number and checking if it is prime manually

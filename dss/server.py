@@ -38,13 +38,16 @@ if __name__ == '__main__':
     print("\nQ:", q)
     print("\nA:", a)
     print("\nG:", g)
+    
     # receive the message and signature from the client
     data = conn.recv(1024).decode('utf-8')
     print('Received Data', data)
+    
     # hash the message
     message = data.split(',')[0]
     signature = (int(data.split(',')[1]), int(data.split(',')[2]))
     print("SIGNATURE: ", signature)
+    
     # verify the signature
     if verify_signature(p, q, g, se_public_key, signature[0], signature[1], hash(message.encode('utf-8'), q)):
         print('Signature verified')
