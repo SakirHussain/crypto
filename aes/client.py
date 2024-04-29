@@ -1,3 +1,6 @@
+# data = 123456ABCD132536
+# key = AABB09182736CCDD
+
 import socket
 INITIAL_PERM = [58, 50, 42, 34, 26, 18, 10, 2,
 				60, 52, 44, 36, 28, 20, 12, 4,
